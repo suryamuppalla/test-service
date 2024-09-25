@@ -1,12 +1,13 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import {DarkTheme, DefaultTheme, ThemeProvider} from '@react-navigation/native';
+import {useFonts} from 'expo-font';
+import {Stack} from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import {useEffect, useState} from 'react';
 import 'react-native-reanimated';
 
-import { useColorScheme } from '@/components/useColorScheme';
+import {useColorScheme} from '@/components/useColorScheme';
+import {getData} from "@/storage";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -42,17 +43,39 @@ export default function RootLayout() {
     return null;
   }
 
-  return <RootLayoutNav />;
+  return <>
+    <RootLayoutNav/>
+  </>;
 }
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
+  const [isLoggedIn, setLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      try {
+        const userToken = await getData('token');
+        if (userToken) {
+          setLoggedIn(true);
+        } else {
+          setLoggedIn(false);
+        }
+      } catch (e) {
+        console.error('Failed to fetch the token');
+      }
+    };
+
+    checkLoginStatus();
+  }, []);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+      <Stack initialRouteName={isLoggedIn ? "(tabs)" : "login"}>
+        <Stack.Screen name="(tabs)" options={{headerShown: false}}/>
+        <Stack.Screen name="modal" options={{presentation: 'modal'}}/>
+        <Stack.Screen name="login" options={{headerShown: false}}/>
+        <Stack.Screen name="generic-chat" options={{ headerTitle: 'Chat' }} />
       </Stack>
     </ThemeProvider>
   );
